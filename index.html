@@ -1,51 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Search</title>
     <style>
         body { background: #0f0f0f; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        input { padding: 15px; width: 300px; border-radius: 25px; border: none; outline: none; }
-        .cloak-btn { margin-top: 20px; padding: 10px; cursor: pointer; background: #333; color: #ccc; border: none; }
+        input { padding: 15px; width: 80%; max-width: 500px; border-radius: 30px; border: 2px solid #333; background: #1a1a1a; color: white; outline: none; }
+        .cloak-menu { margin-top: 20px; }
+        button { background: #222; color: #ccc; border: none; padding: 10px; margin: 5px; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
 
     <h1>Search Engine</h1>
-    <input type="text" id="search-bar" placeholder="Enter URL or search...">
-    
-    <div class="menu">
-        <button class="cloak-btn" onclick="cloak('Google Drive', 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png')">Cloak as Drive</button>
-        <button class="cloak-btn" onclick="reset()">Reset</button>
+    <input type="text" id="search" placeholder="Enter URL or Search Query...">
+
+    <div class="cloak-menu">
+        <button onclick="cloak('Google Drive', 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png')">Drive Cloak</button>
+        <button onclick="resetCloak()">Reset</button>
     </div>
 
     <script>
-        const PROXY_URL = "YOUR_CLOUDFLARE_WORKER_URL_HERE"; // Put your URL here!
+        // PASTE YOUR CLOUDFLARE WORKER URL HERE
+        const PROXY_URL = "https://sue-proxy.your-subdomain.workers.dev";
 
-        document.getElementById('search-bar').addEventListener('keypress', function (e) {
+        const input = document.getElementById('search');
+
+        input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                let input = this.value;
-                if (!input.startsWith('http')) input = 'https://' + input;
+                let url = input.value.trim();
+                if (!url.includes('.') || url.includes(' ')) {
+                    url = "https://www.google.com/search?q=" + encodeURIComponent(url);
+                } else if (!url.startsWith('http')) {
+                    url = "https://" + url;
+                }
                 
-                // Redirect through your Cloudflare Worker
-                window.location.href = `${PROXY_URL}/?url=${encodeURIComponent(input)}`;
+                // Redirect straight to the proxy
+                window.location.href = `${PROXY_URL}/?url=${encodeURIComponent(url)}`;
             }
         });
 
-        function cloak(title, icon) {
-            document.title = title;
+        function cloak(name, icon) {
+            document.title = name;
             let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-            link.type = 'image/x-icon';
             link.rel = 'shortcut icon';
             link.href = icon;
             document.getElementsByTagName('head')[0].appendChild(link);
-            localStorage.setItem('cloak', JSON.stringify({title, icon}));
+            localStorage.setItem('savedCloak', JSON.stringify({name, icon}));
         }
 
-        function reset() {
-            localStorage.removeItem('cloak');
+        function resetCloak() {
+            localStorage.removeItem('savedCloak');
             window.location.reload();
         }
+
+        window.onload = () => {
+            const saved = JSON.parse(localStorage.getItem('savedCloak'));
+            if (saved) cloak(saved.name, saved.icon);
+        };
     </script>
 </body>
 </html>
